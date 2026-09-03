@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="emerald">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Camino Crítico PERT / CPM{% endblock %}</title>
+    <!-- Tailwind CSS & DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        critical: '#dc2626',
+                        'critical-light': '#fee2e2',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Vis-Network (Vis.js) -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+    </script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-base-200 min-h-screen flex flex-col text-base-content antialiased">
+    <!-- Navbar -->
+    <header class="navbar bg-base-100 shadow-md border-b border-base-300 px-4 md:px-8">
+        <div class="flex-1">
+            <a href="/" class="btn btn-ghost text-xl font-bold flex items-center gap-2">
+                <span class="p-2 bg-primary text-primary-content rounded-lg font-mono">CPM</span>
+                <span>Camino Crítico & PERT</span>
+            </a>
+        </div>
+        <div class="flex-none gap-3">
+            <a href="/docs" target="_blank" class="btn btn-sm btn-outline btn-primary">
+                API Docs (OpenAPI)
+            </a>
+            <a href="/" class="btn btn-sm btn-primary">
+                Nuevo Proyecto
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-7xl">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer footer-center p-4 bg-base-100 text-base-content border-t border-base-300">
+        <aside>
+            <p class="text-sm text-base-content/70">
+                Sistema de Análisis de Camino Crítico (CPM / PERT) — Arquitectura Limpia con FastAPI, Jinja2, NetworkX y Vis.js
+            </p>
+        </aside>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

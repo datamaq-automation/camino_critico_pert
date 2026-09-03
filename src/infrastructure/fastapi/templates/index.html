@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio — Camino Crítico PERT / CPM{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header Section -->
+    <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight">Gestor de Proyectos & Camino Crítico</h1>
+                <p class="text-base-content/70 mt-1">
+                    Ingrese las actividades, dependencias y tiempos estimados. Soporta tanto <strong>CPM determinístico</strong> (duración fija) como <strong>PERT probabilístico</strong> (estimaciones optimista, probable y pesimista).
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="loadCpmExample()" class="btn btn-outline btn-sm">
+                    ⚡ Ejemplo CPM Clásico
+                </button>
+                <button type="button" onclick="loadPertExample()" class="btn btn-outline btn-secondary btn-sm">
+                    🎲 Ejemplo PERT Probabilístico
+                </button>
+                <button type="button" onclick="clearActivities()" class="btn btn-ghost btn-sm text-error">
+                    🗑️ Limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Alert if any -->
+    {% if error_message %}
+    <div class="alert alert-error shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+            <h3 class="font-bold">Error de validación del proyecto</h3>
+            <div class="text-sm">{{ error_message }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Input Form -->
+    <form id="pert-form" action="/calculate" method="POST" class="space-y-6">
+        <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <span>Actividades del Proyecto</span>
+                    <span id="activity-count" class="badge badge-primary">0</span>
+                </h2>
+                <button type="button" onclick="addActivityRow()" class="btn btn-sm btn-primary gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Agregar Actividad
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full" id="activities-table">
+                    <thead>
+                        <tr class="bg-base-200 text-base-content/80 text-xs uppercase">
+                            <th class="w-24">ID</th>
+                            <th>Nombre / Descripción</th>
+                            <th class="w-28 text-center" title="Tiempo más optimista si todo sale perfecto">Optimista (o)</th>
+                            <th class="w-28 text-center" title="Tiempo normal más probable">Más Probable (m)</th>
+                            <th class="w-28 text-center" title="Tiempo pesimista en el peor de los casos">Pesimista (p)</th>
+                            <th>Predecesoras (separadas por comas)</th>
+                            <th class="w-16 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activities-body">
+                        <!-- Filas dinámicas -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Target Duration Input -->
+            <div class="divider my-6"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div>
+                    <label class="label">
+                        <span class="label-text font-semibold">Plazo Meta del Proyecto (Opcional - Análisis PERT)</span>
+                    </label>
+                    <input type="number" step="any" min="0" name="target_duration" id="target_duration" 
+                           placeholder="Ej. 14 semanas o días" 
+                           class="input input-bordered w-full" />
+                    <label class="label">
+                        <span class="label-text-alt text-base-content/60">
+                            Si se especifica, calculará la probabilidad estadística acumulada P(T ≤ Plazo Meta).
+                        </span>
+                    </label>
+                </div>
+                <div class="flex justify-end pt-4">
+                    <button type="submit" class="btn btn-primary btn-lg shadow-md w-full md:w-auto px-8">
+                        Calcular Camino Crítico & PERT ➔
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden input for JSON serialized activities -->
+        <input type="hidden" name="activities_json" id="activities_json" />
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let activityIndex = 0;
+
+function addActivityRow(data = null) {
+    const tbody = document.getElementById('activities-body');
+    const row = document.createElement('tr');
+    row.id = `row-${activityIndex}`;
+
+    const idVal = data ? data.id : String.fromCharCode(65 + Math.min(tbody.children.length, 25));
+    const nameVal = data ? data.name : '';
+    const optVal = data ? data.optimistic : 0;
+    const mVal = data ? data.most_likely : 0;
+    const pessVal = data ? data.pessimistic : 0;
+    const predVal = data && data.predecessors ? data.predecessors.join(', ') : '';
+
+    row.innerHTML = `
+        <td>
+            <input type="text" class="input input-bordered input-sm w-full font-mono font-bold uppercase act-id" 
+                   value="${idVal}" required />
+        </td>
+        <td>
+            <input type="text" class="input input-bordered input-sm w-full act-name" 
+                   placeholder="Descripción de la tarea" value="${nameVal}" required />
+        </td>
+        <td>
+            <input type="number" step="any" min="0" class="input input-bordered input-sm w-full text-center act-opt" 
+                   value="${optVal}" onchange="syncDurations(this)" required />
+        </td>
+        <td>
+            <input type="number" step="any" min="0" class="input input-bordered input-sm w-full text-center act-most" 
+                   value="${mVal}" onchange="syncDurations(this)" required />
+        </td>
+        <td>
+            <input type="number" step="any" min="0" class="input input-bordered input-sm w-full text-center act-pess" 
+                   value="${pessVal}" required />
+        </td>
+        <td>
+            <input type="text" class="input input-bordered input-sm w-full act-pred uppercase" 
+                   placeholder="Ej: A, B" value="${predVal}" />
+        </td>
+        <td class="text-center">
+            <button type="button" onclick="removeRow('${row.id}')" class="btn btn-ghost btn-xs text-error btn-circle">
+                ✕
+            </button>
+        </td>
+    `;
+
+    tbody.appendChild(row);
+    activityIndex++;
+    updateCount();
+}
+
+function syncDurations(inputElement) {
+    const row = inputElement.closest('tr');
+    const opt = row.querySelector('.act-opt');
+    const most = row.querySelector('.act-most');
+    const pess = row.querySelector('.act-pess');
+
+    // Si el usuario edita el más probable y los otros eran iguales o cero, igualar para modo determinístico
+    if (inputElement === most && (parseFloat(pess.value) === 0 || parseFloat(pess.value) < parseFloat(most.value))) {
+        if (parseFloat(opt.value) === 0) opt.value = most.value;
+        pess.value = most.value;
+    }
+}
+
+function removeRow(rowId) {
+    const row = document.getElementById(rowId);
+    if (row) {
+        row.remove();
+        updateCount();
+    }
+}
+
+function clearActivities() {
+    document.getElementById('activities-body').innerHTML = '';
+    document.getElementById('target_duration').value = '';
+    updateCount();
+}
+
+function updateCount() {
+    const count = document.getElementById('activities-body').children.length;
+    document.getElementById('activity-count').textContent = count;
+}
+
+function loadCpmExample() {
+    clearActivities();
+    const example = [
+        { id: "A", name: "Análisis de Requisitos", optimistic: 3, most_likely: 3, pessimistic: 3, predecessors: [] },
+        { id: "B", name: "Diseño de Arquitectura", optimistic: 4, most_likely: 4, pessimistic: 4, predecessors: [] },
+        { id: "C", name: "Desarrollo Frontend", optimistic: 2, most_likely: 2, pessimistic: 2, predecessors: ["A"] },
+        { id: "D", name: "Desarrollo Backend", optimistic: 5, most_likely: 5, pessimistic: 5, predecessors: ["B"] },
+        { id: "E", name: "Pruebas e Integración", optimistic: 3, most_likely: 3, pessimistic: 3, predecessors: ["C", "D"] }
+    ];
+    example.forEach(act => addActivityRow(act));
+    document.getElementById('target_duration').value = "12";
+}
+
+function loadPertExample() {
+    clearActivities();
+    const example = [
+        { id: "A", name: "Aprobación del Proyecto", optimistic: 1, most_likely: 2, pessimistic: 3, predecessors: [] },
+        { id: "B", name: "Definición de Especificaciones", optimistic: 2, most_likely: 3.5, pessimistic: 8, predecessors: ["A"] },
+        { id: "C", name: "Adquisición de Equipos", optimistic: 3, most_likely: 4, pessimistic: 11, predecessors: ["A"] },
+        { id: "D", name: "Configuración de Red", optimistic: 4, most_likely: 5.5, pessimistic: 10, predecessors: ["B"] },
+        { id: "E", name: "Desarrollo de Software", optimistic: 1, most_likely: 4.5, pessimistic: 5, predecessors: ["B"] },
+        { id: "F", name: "Instalación de Hardware", optimistic: 1, most_likely: 2, pessimistic: 3, predecessors: ["C"] },
+        { id: "G", name: "Pruebas de Aceptación", optimistic: 2, most_likely: 3, pessimistic: 4, predecessors: ["D", "E", "F"] }
+    ];
+    example.forEach(act => addActivityRow(act));
+    document.getElementById('target_duration').value = "16";
+}
+
+// Serializar a JSON antes de enviar el formulario
+document.getElementById('pert-form').addEventListener('submit', function(e) {
+    const rows = document.getElementById('activities-body').children;
+    if (rows.length === 0) {
+        alert('Debe ingresar al menos una actividad.');
+        e.preventDefault();
+        return;
+    }
+
+    const activities = [];
+    for (let row of rows) {
+        const id = row.querySelector('.act-id').value.trim();
+        const name = row.querySelector('.act-name').value.trim();
+        const optimistic = parseFloat(row.querySelector('.act-opt').value) || 0;
+        const most_likely = parseFloat(row.querySelector('.act-most').value) || 0;
+        const pessimistic = parseFloat(row.querySelector('.act-pess').value) || 0;
+        const predRaw = row.querySelector('.act-pred').value.trim();
+        const predecessors = predRaw ? predRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+        activities.push({
+            id: id,
+            name: name,
+            optimistic: optimistic,
+            most_likely: most_likely,
+            pessimistic: pessimistic,
+            predecessors: predecessors
+        });
+    }
+
+    document.getElementById('activities_json').value = JSON.stringify(activities);
+});
+
+// Cargar ejemplo por defecto al iniciar
+window.addEventListener('DOMContentLoaded', () => {
+    loadCpmExample();
+});
+</script>
+{% endblock %}

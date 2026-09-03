@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Resultados — Camino Crítico PERT / CPM{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Top Bar Navigation -->
+    <div class="flex items-center justify-between">
+        <a href="/" class="btn btn-outline btn-sm gap-2">
+            ← Volver a Modificar Actividades
+        </a>
+        <div class="text-sm text-base-content/60">
+            Total de actividades procesadas: <span class="font-bold text-base-content">{{ result.activities|length }}</span>
+        </div>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Duración Total -->
+        <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body p-5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs uppercase tracking-wider text-base-content/60 font-bold">Duración del Proyecto</span>
+                    <span class="p-2 bg-primary/10 text-primary rounded-lg text-lg">⏱️</span>
+                </div>
+                <div class="text-3xl font-extrabold mt-2 text-primary">
+                    {{ result.project_duration }} <span class="text-sm font-normal text-base-content/70">unidades de tiempo</span>
+                </div>
+                <p class="text-xs text-base-content/60 mt-1">Tiempo mínimo estimado para culminar</p>
+            </div>
+        </div>
+
+        <!-- Caminos Críticos -->
+        <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body p-5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs uppercase tracking-wider text-base-content/60 font-bold">Camino(s) Crítico(s)</span>
+                    <span class="p-2 bg-error/10 text-error rounded-lg text-lg">🎯</span>
+                </div>
+                <div class="mt-2 space-y-1">
+                    {% for path in result.critical_paths %}
+                    <div class="badge badge-error text-white font-mono font-bold text-xs py-2 px-3">
+                        {{ path | join(" ➔ ") }}
+                    </div>
+                    {% else %}
+                    <span class="text-sm text-base-content/50">Ninguno detectado</span>
+                    {% endfor %}
+                </div>
+                <p class="text-xs text-base-content/60 mt-2">Actividades sin margen de holgura</p>
+            </div>
+        </div>
+
+        <!-- Varianza y Desviación -->
+        <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body p-5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs uppercase tracking-wider text-base-content/60 font-bold">Varianza Crítica (PERT)</span>
+                    <span class="p-2 bg-secondary/10 text-secondary rounded-lg text-lg">📊</span>
+                </div>
+                <div class="text-2xl font-bold mt-2">
+                    σ² = {{ result.critical_variance }}
+                </div>
+                <div class="text-sm text-base-content/70">
+                    Desv. Estándar: <strong>σ = {{ result.critical_std_dev }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Probabilidad de Cumplimiento -->
+        <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body p-5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs uppercase tracking-wider text-base-content/60 font-bold">Probabilidad Meta</span>
+                    <span class="p-2 bg-accent/10 text-accent rounded-lg text-lg">🎯</span>
+                </div>
+                {% if result.probability %}
+                <div class="text-2xl font-black mt-2 text-accent">
+                    {{ result.probability.probability_percentage }}%
+                </div>
+                <progress class="progress progress-accent w-full mt-1" value="{{ result.probability.probability_percentage }}" max="100"></progress>
+                <p class="text-xs text-base-content/60 mt-1">
+                    Plazo: {{ result.probability.target_duration }} | Z: {{ result.probability.z_score }}
+                </p>
+                {% else %}
+                <div class="text-sm text-base-content/50 mt-3">
+                    No se especificó un plazo meta.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Graph Visualizer Section -->
+    <div class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
+        <div class="card-body p-6">
+            <!-- Tabs & Toolbar -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-base-200">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-bold">Diagrama de Red (AON)</h2>
+                    <span class="badge badge-sm badge-outline">Activity-on-Node</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" onclick="fitGraph()" class="btn btn-sm btn-outline">
+                        🔍 Centrar
+                    </button>
+                    <button type="button" id="btn-toggle-physics" onclick="togglePhysics()" class="btn btn-sm btn-outline">
+                        Física: OFF
+                    </button>
+                    <button type="button" onclick="toggleMermaidModal()" class="btn btn-sm btn-outline btn-secondary">
+                        Ver en Mermaid.js
+                    </button>
+                </div>
+            </div>
+
+            <!-- Leyenda de colores -->
+            <div class="flex flex-wrap items-center gap-4 py-2 text-xs">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-3.5 h-3.5 rounded bg-red-100 border-2 border-red-600 inline-block"></span>
+                    <span class="font-medium text-red-900">Camino Crítico (Holgura = 0)</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-3.5 h-3.5 rounded bg-green-50 border-2 border-green-600 inline-block"></span>
+                    <span class="font-medium text-green-900">Actividad No Crítica</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-base-content/60">
+                    <span>💡 Tip: Haz clic en un nodo para inspeccionar sus cuadrantes o arrástralo para reposicionarlo.</span>
+                </div>
+            </div>
+
+            <!-- Network Canvas -->
+            <div class="relative">
+                <div id="network-container"></div>
+
+                <!-- Node Details Floating Card -->
+                <div id="node-details-card" class="hidden absolute top-4 right-4 z-10 w-72 bg-base-100/95 backdrop-blur shadow-xl border border-base-300 rounded-xl p-4">
+                    <div class="flex items-center justify-between border-b border-base-200 pb-2 mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-lg font-mono" id="detail-node-id">A</span>
+                            <div id="detail-node-status"></div>
+                        </div>
+                        <button type="button" onclick="hideNodeDetails()" class="btn btn-ghost btn-xs btn-circle">✕</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                        <div class="bg-base-200 p-2 rounded">
+                            <span class="text-base-content/60 block">Duración:</span>
+                            <span class="font-bold text-sm" id="detail-node-dur">0</span>
+                        </div>
+                        <div class="bg-base-200 p-2 rounded">
+                            <span class="text-base-content/60 block">Holgura Total:</span>
+                            <span class="font-bold text-sm" id="detail-node-slack">0</span>
+                        </div>
+                        <div class="bg-base-200 p-2 rounded">
+                            <span class="text-base-content/60 block">Inicio Temprano (ES):</span>
+                            <span class="font-bold text-sm" id="detail-node-es">0</span>
+                        </div>
+                        <div class="bg-base-200 p-2 rounded">
+                            <span class="text-base-content/60 block">Fin Temprano (EF):</span>
+                            <span class="font-bold text-sm" id="detail-node-ef">0</span>
+                        </div>
+                        <div class="bg-base-200 p-2 rounded">
+                            <span class="text-base-content/60 block">Inicio Tardío (LS):</span>
+                            <span class="font-bold text-sm" id="detail-node-ls">0</span>
+                        </div>
+                        <div class="bg-base-200 p-2 rounded">
+                            <span class="text-base-content/60 block">Fin Tardío (LF):</span>
+                            <span class="font-bold text-sm" id="detail-node-lf">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calculations Data Table -->
+    <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body p-6">
+            <h2 class="text-xl font-bold mb-4">Tabla Detallada de Tiempos y Holguras</h2>
+            <div class="overflow-x-auto">
+                <table class="table table-sm table-zebra w-full font-mono text-xs">
+                    <thead>
+                        <tr class="bg-base-200 text-base-content/80 uppercase">
+                            <th>ID</th>
+                            <th class="font-sans">Nombre</th>
+                            <th class="text-center">Duración (Te)</th>
+                            <th class="text-center">Varianza (σ²)</th>
+                            <th>Predecesoras</th>
+                            <th class="text-center">ES</th>
+                            <th class="text-center">EF</th>
+                            <th class="text-center">LS</th>
+                            <th class="text-center">LF</th>
+                            <th class="text-center">Holgura Total</th>
+                            <th class="text-center">Holgura Libre</th>
+                            <th class="text-center font-sans">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for act in result.activities %}
+                        <tr class="{% if act.is_critical %}bg-red-50/60 font-semibold{% endif %}">
+                            <td class="font-bold">{{ act.id }}</td>
+                            <td class="font-sans font-medium">{{ act.name }}</td>
+                            <td class="text-center">{{ act.duration }}</td>
+                            <td class="text-center">{{ act.variance }}</td>
+                            <td>{{ act.predecessors | join(", ") or "-" }}</td>
+                            <td class="text-center">{{ act.time_window.early_start }}</td>
+                            <td class="text-center">{{ act.time_window.early_finish }}</td>
+                            <td class="text-center">{{ act.time_window.late_start }}</td>
+                            <td class="text-center">{{ act.time_window.late_finish }}</td>
+                            <td class="text-center {% if act.is_critical %}text-red-600 font-bold{% endif %}">
+                                {{ act.time_window.total_slack }}
+                            </td>
+                            <td class="text-center">{{ act.time_window.free_slack }}</td>
+                            <td class="text-center font-sans">
+                                {% if act.is_critical %}
+                                <span class="badge badge-error badge-sm text-white font-bold">CRÍTICA</span>
+                                {% else %}
+                                <span class="badge badge-ghost badge-sm text-base-content/70">Holgada</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Mermaid.js -->
+<dialog id="mermaid-modal" class="modal">
+    <div class="modal-box max-w-4xl">
+        <h3 class="font-bold text-lg mb-4">Diagrama Generado con Mermaid.js</h3>
+        <div id="mermaid-diagram" class="mermaid overflow-x-auto my-4">
+            {{ mermaid_code }}
+        </div>
+        <div class="mt-4">
+            <label class="label"><span class="label-text text-xs text-base-content/60">Código Mermaid (para documentación Markdown):</span></label>
+            <pre class="bg-base-200 p-3 rounded-lg text-xs font-mono overflow-x-auto">{{ mermaid_code }}</pre>
+        </div>
+        <div class="modal-action">
+            <button type="button" onclick="toggleMermaidModal()" class="btn">Cerrar</button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/graph_viewer.js"></script>
+<script>
+    const graphData = {{ vis_graph | tojson | safe }};
+
+    window.addEventListener('DOMContentLoaded', () => {
+        initPertGraph(graphData);
+    });
+
+    function toggleMermaidModal() {
+        const modal = document.getElementById('mermaid-modal');
+        if (modal.open) {
+            modal.close();
+        } else {
+            modal.showModal();
+            mermaid.run({ nodes: [document.getElementById('mermaid-diagram')] });
+        }
+    }
+</script>
+{% endblock %}
