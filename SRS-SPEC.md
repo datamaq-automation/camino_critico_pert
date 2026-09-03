@@ -1,319 +1,172 @@
-# SRS-SPECS: {nombre_del_sistema_o_proyecto} — Single Source of Truth (SSOT) & Especificación del Sistema
+# SRS-SPECS: Sistema de Camino Crítico (CPM / PERT) — Single Source of Truth (SSOT)
 
-> **Documento:** `srs-spec-backend-fastapi.md`  
-> **Versión:** `{version_documento_ej_1_0_0}`  
-> **Estado:** `{borrador_en_revision_aprobado}`  
-> **Fecha:** `{fecha_actual_o_release}`  
-> **Autor(es):** `{autor_o_equipo_responsable}`  
-> **Repositorio / Módulo:** `{organizacion_o_usuario}/{nombre_del_repositorio}`  
+> **Documento:** `SRS-SPEC.md`  
+> **Versión:** `1.0.0`  
+> **Estado:** `Aprobado`  
+> **Fecha:** `2026-09-02`  
+> **Repositorio / Módulo:** `camino_critico_pert`  
 
 ---
 
 ## 1. Contexto Estratégico & Propuesta de Valor
 
 ### 1.1. Foco Estratégico & Alcance
-* **Mercado Objetivo:** `{definicion_de_industria_o_nicho_objetivo}`.
-* **Buyer Persona (Decisor / Cliente Ideal):** `{perfil_del_comprador_o_tomador_de_decision}`.
-* **User Persona (Operador / Usuario Final):** `{perfil_del_usuario_final_u_operador_del_sistema}`.
-* **Alcance Geográfico & Modalidad:** `{ej_Servicio_cloud_global_o_despliegue_on_premise_hibrido}`.
-* **Fuera de Alcance (*Out of Scope*):** `{lista_de_elementos_o_features_excluidas_en_esta_etapa}`.
+* **Propósito del Sistema:** Proveer un motor de cálculo y visualizador interactivo de alta precisión para la gestión de proyectos mediante el **Método del Camino Crítico (CPM)** y análisis probabilístico **PERT (Program Evaluation and Review Technique)**.
+* **Usuario Objetivo:** Ingenieros de proyectos, planificadores, directores de obra, docentes y estudiantes de Investigación Operativa / Gestión de Proyectos.
+* **Modalidad Operativa:** Aplicación web local y desplegable en contenedores (*Cloud / On-Premise*), con arquitectura desacoplada y liviana.
+* **Fuera de Alcance (*Out of Scope* — Evitando Sobreingeniería):**
+  - **Base de Datos / ORM:** No se requiere persistencia en disco ni motores relacionales; el procesamiento se realiza en memoria (*In-Memory*) en tiempo real.
+  - **Autenticación y RBAC (JWT/OAuth2):** Acceso libre e inmediato como herramienta de ingeniería (*Zero-Friction Tool*).
+  - **Brokers de Mensajería / Workers Asíncronos (Kafka/RabbitMQ/Redis):** Procesamiento sincrónico directo en CPU (< 10 ms por cálculo).
 
 ### 1.2. Pilares de Valor de la Solución
 | Pilar | Enfoque | Implementación en este Sistema |
 | :--- | :--- | :--- |
-| **1. Activos & Entorno Operativo** | Infraestructura física, dispositivos, hardware o fuentes de datos base. | `{descripcion_interaccion_con_activos_o_dispositivos}` |
-| **2. Software & Lógica de Negocio** | Captura, procesamiento en tiempo real, persistencia y APIs. | `{descripcion_del_flujo_de_datos_api_o_interfaz}` |
-| **3. Impacto Económico & ROI** | Optimización de costos, generación de ingresos o eficiencia operativa. | `{descripcion_del_impacto_economico_o_ahorro_esperado}` |
-
-### 1.3. Coordinación Operativa, Roles & Seguridad
-* **Liderazgo Técnico / Responsable:** `{responsable_tecnico_o_lead_developer}`.
-* **Ventanas Operativas & Disponibilidad:** `{restricciones_horarias_y_ventanas_de_mantenimiento_o_soporte}`.
-* **Habilitaciones, Normativas & Seguridad:** `{certificaciones_normativas_legales_y_requisitos_de_acceso}`.
+| **1. Dominio Puro & Rigor Matemático** | Algoritmos de grafos determinísticos y probabilísticos sin dependencias externas. | Forward/Backward pass, holguras total/libre, cálculo de $\mu$, $\sigma^2$ y función normal acumulada en `src/domain/pert/`. |
+| **2. Visualización Interactiva & UX** | Diagramas de red claros y manipulables en tiempo real. | Nodos estilo *Activity-on-Node* (AON) con `vis-network`, camino crítico resaltado en rojo neón y exportación a `Mermaid.js`. |
+| **3. Arquitectura Limpia & Simplicidad** | Desacoplamiento estricto y código mantenible sin sobreingeniería. | Clean Architecture canónica (4 círculos de Uncle Bob), validación AST y cero dependencias innecesarias. |
 
 ---
 
-## 2. Modelo de Negocio Canvas (BMC de 9 Bloques) & Gobernanza
+## 2. Modelo Operativo & Gobernanza
 
-### 2.1. Matriz del Business Model Canvas
-| Bloque Canvas | Definición Estratégica | Componentes Clave en el Software |
-| :--- | :--- | :--- |
-| **1. Socios Clave (KP)** | `{alianzas_proveedores_cloud_o_integradores_externos}` | `{integraciones_apis_o_pasarelas_asociadas}` |
-| **2. Actividades Clave (KA)** | `{procesamiento_core_desarrollo_soporte_operaciones}` | `{servicios_y_casos_de_uso_principales}` |
-| **3. Recursos Clave (KR)** | `{algoritmos_propiedad_intelectual_bases_de_datos_servidores}` | `{infraestructura_y_modelos_de_datos}` |
-| **4. Propuesta de Valor (VP)** | `{beneficio_unico_que_resuelve_el_problema_del_cliente}` | `{endpoints_publicos_dashboards_o_servicios}` |
-| **5. Relación con Clientes (CR)** | `{automatizada_autoservicio_soporte_dedicado_alertas}` | `{notificadores_webhooks_email_mensajeria}` |
-| **6. Canales de Distribución (CH)** | `{web_api_rest_mobile_brokers_de_mensajeria}` | `{routers_fastapi_controladores_y_suscriptores}` |
-| **7. Segmentos de Clientes (CS)** | `{tipos_de_clientes_o_audiencias_objetivo}` | `{roles_rbac_y_politicas_de_autorizacion}` |
-| **8. Estructura de Costos (CS)** | `{costos_cloud_licencias_mantenimiento_procesamiento}` | `{optimizacion_de_consultas_y_eficiencia_de_recursos}` |
-| **9. Fuentes de Ingresos (RS)** | `{suscripcion_saas_pago_por_uso_licencias_servicios}` | `{pasarelas_de_pago_o_gestion_de_suscripciones}` |
-
-### 2.2. Organigrama Operativo / Gobernanza de Agentes IA (Opcional)
-* **`agente-orquestador` / `agente-lead`:** Gobernanza general, alineación técnica y resolución de conflictos entre módulos.
-* **`agente-core-dominio`:** Supervisión de la lógica de negocio pura, entidades y reglas de dominio.
-* **`agente-integraciones-api`:** Gestión de endpoints, controladores, validación de schemas y contratos externos.
-* **`agente-persistencia-datos`:** Modelado de datos, migraciones, optimización de queries y repositorios.
-* **`agente-qa-calidad`:** Validación continua del Guantelete de Restricciones (`test_architecture.py`), Pyright y tests.
-
-### 2.3. Escalera de Valor / Modelo de Conversión
-* **Nivel de Entrada (*Lead Magnet* / Tier Gratuito):** `{ej_Demo_publica_tier_gratuito_o_herramienta_de_evaluacion}`.
-* **Servicio Core (*Core Offering*):** `{ej_Plataforma_principal_funcionalidades_core_o_servicio_profesional}`.
-* **Nivel Avanzado (*Enterprise* / Retención):** `{ej_SLA_dedicado_analitica_avanzada_soporte_24_7}`.
+* **Control de Calidad Automatizado:** Guantelete de Restricciones AST (`tests/test_architecture.py`) que valida la pureza del dominio, la ausencia de imports relativos y el tipado estricto.
+* **Entrega Continua & Verificación:** 100% de tests unitarios, de integración y E2E pasando antes de cualquier cambio.
 
 ---
 
 ## 3. Especificación de Requisitos de Software (SRS)
 
 ### 3.1. Requisitos Funcionales (FR)
-* **FR-01 - Ingesta y Validación de Datos:** El sistema debe procesar eventos/solicitudes de `{fuente_de_entrada}` validando estrictamente los schemas mediante Pydantic v2.
-* **FR-02 - Persistencia Transaccional:** El sistema debe almacenar las transacciones en `{motor_bd_ej_PostgreSQL_MySQL_SQLite}` mediante el patrón Repository tipado.
-* **FR-03 - Emisión de Eventos y Notificaciones:** El sistema debe emitir alertas/eventos asíncronos vía `{canales_ej_Webhooks_SMTP_MessageBroker}` cuando `{condicion_disparadora}`.
-* **FR-04 - Control de Acceso y Autorización:** El sistema debe restringir el acceso a los recursos mediante `{modelo_seguridad_ej_JWT_OAuth2_API_Keys}` y permisos basados en roles (`{roles_del_sistema}`).
-* **FR-05 - Seguridad y Anti-Abuso:** El sistema debe implementar rate limiting, sanitización estricta de entradas y mitigación de vulnerabilidades OWASP (SQLi, XSS, SSRF).
-* **FR-06 - `{nombre_requisito_especifico_1}`:** El sistema debe `{descripcion_de_accion_y_resultado_esperado}`.
-* **FR-07 - `{nombre_requisito_especifico_2}`:** El sistema debe `{descripcion_de_accion_y_resultado_esperado}`.
+* **FR-01 - Ingesta y Validación de Actividades:** El sistema debe procesar solicitudes web y API validando estrictamente identificadores, nombres, duraciones ($o \le m \le p$) y dependencias mediante Pydantic v2.
+* **FR-02 - Procesamiento en Memoria (In-Memory Processing):** El sistema debe procesar y resolver el proyecto en tiempo real sin requerir conexiones ni transacciones en bases de datos relacionales o NoSQL.
+* **FR-03 - Detección de Ciclos y Validación de DAG:** El sistema debe validar que la red de actividades sea un Grafo Dirigido Acíclico (DAG), detectando y notificando cualquier ciclo cerrado tanto a nivel dominio (algoritmo de Kahn) como en infraestructura (`NetworkX`).
+* **FR-04 - Cálculo de Camino Crítico (CPM):**
+  - Realizar el *Forward Pass* para calcular Inicio Temprano ($ES$) y Fin Temprano ($EF$).
+  - Realizar el *Backward Pass* para calcular Fin Tardío ($LF$) e Inicio Tardío ($LS$).
+  - Calcular Holgura Total ($HT = LF - EF$) y Holgura Libre ($HL = \min(ES_{succ}) - EF$).
+  - Identificar todas las secuencias completas de actividades críticas ($HT = 0$).
+* **FR-05 - Análisis Probabilístico (PERT):**
+  - Calcular la duración esperada $t_e = (o + 4m + p)/6$ y varianza $\sigma^2 = ((p - o)/6)^2$.
+  - Calcular la desviación estándar del camino crítico $\sigma_{\text{proyecto}} = \sqrt{\sum \sigma_{\text{crítico}}^2}$.
+  - Calcular el $Z$-score y la probabilidad acumulada $P(T \le T_{\text{meta}})$ si se especifica un plazo objetivo.
+* **FR-06 - Visualización Gráfica Interactiva:**
+  - Renderizar el grafo de red interactivo con `vis-network` (AON, zoom, pan, arrastre de nodos y panel inspector al hacer clic).
+  - Resaltar visualmente las aristas y nodos del Camino Crítico en color rojo vibrante.
+  - Proveer código sintáctico para renderizado y exportación con `Mermaid.js`.
+* **FR-07 - API REST JSON & Web UI:**
+  - Exponer endpoints OpenAPI documentados en `/api/v1/pert/calculate` y `/api/v1/pert/validate-dag`.
+  - Exponer interfaz web interactiva con plantillas Jinja2, Tailwind CSS y DaisyUI en `/`.
 
 ### 3.2. Requisitos No Funcionales (NFR)
-* **NFR-01 - Latencia y Rendimiento:** La latencia p95 en lecturas debe ser inferior a `{latencia_maxima_ms}` ms bajo condiciones normales de operación.
-* **NFR-02 - Concurrencia & Throughput:** Capacidad para procesar `{rps_o_mensajes_por_segundo}` `{solicitudes_o_mensajes_por_segundo}` concurrentes sin degradación.
-* **NFR-03 - Disponibilidad & Resiliencia:** SLA objetivo del `{sla_porcentaje_ej_99_9}`% con reconexión automática y degradación elegante ante caídas de dependencias externas.
-* **NFR-04 - Seguridad y Cifrado:** Cifrado en tránsito (TLS 1.3) y en reposo para datos sensibles; gestión de secretos aislada vía variables de entorno (`.env` protegido por `.gitignore`).
-* **NFR-05 - Conformidad Arquitectónica:** 100% de cumplimiento en pruebas automáticas del Guantelete AST (`tests/test_architecture.py`) en cada commit o PR.
+* **NFR-01 - Latencia de Cálculo:** El cálculo de un grafo de hasta 500 actividades debe ejecutarse en menos de 20 ms en CPU.
+* **NFR-02 - Pureza Arquitectónica:** 0 dependencias externas en la capa de Dominio (`src/domain/pert/`).
+* **NFR-03 - Tipado Estricto Exhaustivo:** 100% de funciones tipadas en parámetros y retornos validadas por Pyright (0 errores).
+* **NFR-04 - Conformidad del Guantelete AST:** Superar el 100% de las 5 baterías de `tests/test_architecture.py`.
 
 ---
 
-## 4. Stack Tecnológico, Arquitectura Limpia & Convenciones (CONVENTIONS)
+## 4. Stack Tecnológico, Arquitectura Limpia & Convenciones
 
 ### 4.1. Stack Tecnológico Base
-* **Lenguaje:** Python 3.10+ (Tipado estricto con `typing`, `Annotated`, `dataclasses`).
+* **Lenguaje:** Python 3.12+ (Tipado estricto con `typing`, `dataclasses`).
 * **Arquitectura:** Clean Architecture Canónica (4 Círculos de Uncle Bob) + Screaming DDD.
-* **Framework Web:** FastAPI (asíncrono, OpenAPI autodocumentado).
+* **Framework Web:** FastAPI + Uvicorn.
+* **Motor de Plantillas & UI:** Jinja2 + Tailwind CSS + DaisyUI (vía CDN).
+* **Librerías de Grafos:**
+  - Backend: `networkx` (análisis topológico, métricas y validación de DAGs en infraestructura).
+  - Frontend: `vis-network` (Vis.js CDN para grafos interactivos AON) y `mermaid.js` (diagramas markdown).
 * **Validación & Schemas:** Pydantic v2 (`BaseModel`, `Field`, `ConfigDict`).
-* **Configuración Centralizada:** `pydantic-settings` (`BaseSettings`, `SettingsConfigDict`).
-* **ORM & Persistencia:** `{reemplazar_orm_ej_SQLAlchemy_2_0_SQLModel}` con soporte asíncrono.
-* **Broker & Mensajería (Opcional):** `{reemplazar_broker_ej_MQTT_Kafka_RabbitMQ_Redis}` con `{driver_broker_ej_aiokafka_paho_redis_asyncio}`.
-* **Testing:** Pytest (`pytest-asyncio`, `httpx`).
-* **Linters & Tipado:** Ruff y Pyright (modo estricto).
+* **Configuración Centralizada:** `pydantic-settings` (`BaseSettings`).
+* **Testing & Calidad:** Pytest, pytest-asyncio, HTTPX, Ruff (linter/formatter) y Pyright.
 
-### 4.2. Estructura Canónica de Directorios (Screaming DDD + Clean Architecture)
+### 4.2. Estructura Canónica de Directorios
 
 ```
-.
-├── .env                                         # Variables de entorno secretas (NUNCA en git)
-├── .env.example                                 # Plantilla canónica de variables de entorno
-├── .gitignore                                   # Exclusiones estándar (ignora .env, __pycache__, .venv)
+camino_critico_pert/
+├── .env                                         # Variables de entorno locales
+├── .env.example                                 # Plantilla de variables de entorno
+├── .gitignore                                   # Exclusiones estándar (.env, .venv, etc.)
+├── pyproject.toml                               # Configuración de proyecto y herramientas
+├── pyrightconfig.json                           # Configuración Pyright / Pylance
+├── .vscode/settings.json                        # Exclusiones LSP para el editor
 │
 ├── src/
-│   ├── domain/                                  # CÍRCULO 1: Reglas de Negocio del Negocio (DDD Puro)
-│   │   └── {bounded_context_tematico}/          # Bounded Context temático (Grita el dominio)
-│   │       ├── __init__.py                      # (0 bytes obligatorio)
-│   │       ├── entities.py                      # Entidades de negocio con identidad ({Entidad_1}, {Entidad_2})
-│   │       ├── value_objects.py                 # Value Objects inmutables ({VO_1}, {VO_2})
-│   │       ├── services.py                      # Servicios de Dominio / Lógica multi-entidad ({ServicioDominio_1})
-│   │       ├── repositories.py                  # Interfaces abstractas de repositorios ({Entidad_1}Repository)
-│   │       ├── events.py                        # Eventos de Dominio ({EventoDominio_1})
-│   │       └── exceptions.py                    # Excepciones de negocio de dominio puro
+│   ├── domain/                                  # CÍRCULO 1: Reglas de Negocio Puras (DDD)
+│   │   └── pert/
+│   │       ├── entities.py                      # Activity, CriticalPathResult, ProbabilityResult
+│   │       ├── value_objects.py                 # DurationEstimate, TimeWindow
+│   │       ├── services.py                      # CpmPertCalculator, PertProbabilityCalculator
+│   │       └── exceptions.py                    # CycleDetectedError, InvalidDurationError, etc.
 │   │
-│   ├── application/                             # CÍRCULO 2: Reglas de la Aplicación (Casos de Uso / Interactors)
-│   │   └── {bounded_context_tematico}/
-│   │       ├── __init__.py                      # (0 bytes obligatorio)
-│   │       ├── use_cases/                       # Orquestación de Casos de Uso (Verbos que gritan la acción)
-│   │       │   ├── {nombre_caso_uso_1_verbo}.py # class {NombreCasoUso1}UseCase(execute)
-│   │       │   └── {nombre_caso_uso_2_verbo}.py # class {NombreCasoUso2}UseCase(execute)
-│   │       ├── dtos/                            # Data Transfer Objects (Pydantic BaseModel)
-│   │       │   ├── {nombre_dto_request}.py      # class {NombreCasoUso1}Request
-│   │       │   └── {nombre_dto_response}.py     # class {NombreCasoUso1}Response
-│   │       └── mappers/                         # Traductores bidireccionales puros DTO <-> Entity
-│   │           └── {nombre_mapper}.py           # class {NombreEntidad}Mapper
+│   ├── application/                             # CÍRCULO 2: Casos de Uso
+│   │   └── pert/
+│   │       ├── dtos/                            # ActivityInputDTO, CriticalPathResponseDTO, etc.
+│   │       ├── mappers/                         # PertMapper (DTO <-> Domain)
+│   │       └── use_cases/                       # CalculateCriticalPathUseCase
 │   │
-│   ├── adapters/                                # CÍRCULO 3: Interface Adapters (Agnósticos de Frameworks Web)
-│   │   └── {bounded_context_tematico}/
-│   │       ├── __init__.py                      # (0 bytes obligatorio)
-│   │       ├── controllers/                     # Controladores que reciben DTOs y llaman al UseCase
-│   │       │   └── {nombre_controlador}.py      # class {NombreEntidad}Controller
-│   │       ├── presenters/                      # Formatean ResponseDTO o excepciones a HTTP/JSON/ViewModel
-│   │       │   └── {nombre_presentador}.py      # class {NombreEntidad}Presenter
-│   │       ├── gateways/                        # Adaptadores hacia servicios externos (APIs, notificaciones)
-│   │       │   └── {nombre_gateway}.py          # class {NombreServicioExterno}Gateway
-│   │       └── view_models/                     # (Opcional) Modelos para renderizado visual server-side
+│   ├── adapters/                                # CÍRCULO 3: Interface Adapters
+│   │   └── pert/
+│   │       ├── controllers/                     # PertController
+│   │       └── presenters/                      # PertGraphPresenter (Vis.js y Mermaid.js)
 │   │
-│   ├── infrastructure/                          # CÍRCULO 4: Frameworks & Drivers (Detalles Externos)
-│   │   ├── fastapi/                             # Mecanismo de entrega Web
-│   │   │   ├── routers/                         # Endpoints REST delgados (Thin Controllers)
-│   │   │   └── dependencies.py                  # Inyección de dependencias (Depends)
-│   │   ├── {orm_driver_dir}/                    # Persistencia concreta (ej. sqlalchemy)
-│   │   │   ├── models/                          # DeclarativeBase y esquemas de tablas
-│   │   │   └── repositories/                    # Implementaciones concretas de domain/.../repositories.py
-│   │   ├── {broker_driver_dir}/                 # Daemons/suscriptores para mensajería (si aplica)
-│   │   └── settings/                            # Configuración y Logging Centralizado
-│   │       ├── __init__.py                      # (0 bytes obligatorio)
-│   │       ├── config.py                        # Settings(BaseSettings) con pydantic-settings
-│   │       └── logger.py                        # Logging estructurado JSON/texto configurado desde Settings
+│   ├── infrastructure/                          # CÍRCULO 4: Frameworks, UI & Drivers
+│   │   ├── graph/                               # NetworkXAdapter (validación de DAGs con NetworkX)
+│   │   ├── fastapi/
+│   │   │   ├── dependencies.py                  # Inyectores de dependencias
+│   │   │   ├── routers/                         # web_routes.py (HTML) y api_v1.py (JSON)
+│   │   │   ├── templates/                       # Plantillas Jinja2 (base.html, index.html, result.html)
+│   │   │   └── static/                          # CSS y graph_viewer.js (Vis.js controller)
+│   │   └── settings/                            # Configuración tipada (config.py) y logger.py
 │   │
-│   └── main.py                                  # Entrypoint ASGI (app = create_app())
+│   └── main.py                                  # Entrypoint ASGI FastAPI (create_app)
 │
 └── tests/
-    ├── __init__.py                              # (0 bytes obligatorio)
-    ├── test_architecture.py                     # Validador AST del Guantelete de Restricciones
-    ├── unit/                                    # Pruebas unitarias de domain y use_cases
-    ├── integration/                             # Pruebas de integración con DB/broker
-    └── e2e/                                     # Pruebas de endpoints FastAPI (httpx.AsyncClient)
+    ├── test_architecture.py                     # Guantelete AST de 5 Baterías
+    ├── unit/                                    # Pruebas unitarias de CPM, PERT y probabilidades
+    ├── integration/                             # Pruebas de integración de NetworkXAdapter
+    └── e2e/                                     # Pruebas de endpoints REST y rutas Jinja2
 ```
 
-### 4.3. Especificación de Configuración & Logging Centralizado
-
-#### A. Gestión de Entorno (`.env`, `.env.example`, `.gitignore`)
-* **Regla de Seguridad:** El archivo `.env` contiene credenciales sensibles y **NUNCA** se commitea a Git. El archivo [`.gitignore`](file:///home/agustin/proyectos_software/spec/.gitignore) debe excluir explícitamente `.env` y `.env.*` (excepto `!.env.example`).
-* **Plantilla Canónica (`.env.example`):** Define todas las claves de configuración necesarias con valores ficticios o de desarrollo para guiar el setup local y pipelines de CI/CD.
-
-#### B. `src/infrastructure/settings/config.py` (Pydantic Settings)
-* Centraliza toda la configuración del sistema en una clase `Settings` derivada de `pydantic_settings.BaseSettings`:
-  ```python
-  from functools import lru_cache
-  from typing import List
-  from pydantic import Field
-  from pydantic_settings import BaseSettings, SettingsConfigDict
-
-  class Settings(BaseSettings):
-      model_config = SettingsConfigDict(
-          env_file=".env",
-          env_file_encoding="utf-8",
-          case_sensitive=True,
-          extra="ignore",
-      )
-
-      # Entorno
-      ENVIRONMENT: str = Field(default="development")
-      DEBUG: bool = Field(default=False)
-      LOG_LEVEL: str = Field(default="INFO")
-
-      # API
-      PROJECT_NAME: str = Field(default="{nombre_del_sistema_o_proyecto}")
-      VERSION: str = Field(default="1.0.0")
-      API_V1_PREFIX: str = Field(default="/api/v1")
-      ALLOWED_HOSTS: List[str] = Field(default_factory=lambda: ["*"])
-
-      # Seguridad
-      SECRET_KEY: str = Field(default="insecure-secret-key-change-in-production")
-      ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60)
-
-      # Base de Datos
-      DATABASE_URL: str = Field(default="sqlite+aiosqlite:///./app.db")
-
-  @lru_cache()
-  def get_settings() -> Settings:
-      return Settings()
-  ```
-
-#### C. `src/infrastructure/settings/logger.py` (Logging Estructurado)
-* Centraliza la inicialización de loggers con formato estructurado (JSON en producción, formateado en desarrollo):
-  ```python
-  import logging
-  import sys
-  from src.infrastructure.settings.config import get_settings
-
-  def setup_logging() -> logging.Logger:
-      settings = get_settings()
-      log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
-      
-      logging.basicConfig(
-          level=log_level,
-          format="%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d - %(message)s",
-          handlers=[logging.StreamHandler(sys.stdout)],
-      )
-      logger = logging.getLogger(settings.PROJECT_NAME)
-      logger.setLevel(log_level)
-      return logger
-
-  logger = setup_logging()
-  ```
-
 ---
 
-### 4.4. Las Siete Reglas Innegociables de Arquitectura
+## 5. Las Siete Reglas Innegociables de Arquitectura
 
-1. **Regla de Dependencia de Capas (Validada por AST):**
-   * `domain` nunca importa de capas externas (`application`, `adapters`, `infrastructure`).
-   * `application` solo depende de `domain` y `pydantic`.
-   * `adapters` depende de `application` y `domain` (nunca de `infrastructure` ni de FastAPI/ORM).
-   * `infrastructure` aísla frameworks, bases de datos y librerías externas.
+1. **Regla de Dependencia de Capas:**
+   - `domain` nunca importa de capas externas (`application`, `adapters`, `infrastructure`) ni librerías de terceros (0 dependencias).
+   - `application` solo depende de `domain` y `pydantic`.
+   - `adapters` depende de `application` y `domain` (nunca de `infrastructure`).
+   - `infrastructure` aísla frameworks web, librerías gráficas y drivers.
 2. **Archivos `__init__.py` de 0 Bytes:**
-   * El 100% de los archivos `__init__.py` en `src/` y `tests/` deben estar completamente vacíos (0 bytes) para evitar dependencias circulares y efectos secundarios al importar módulos.
-3. **Desacople Absoluto de Datos (`data/`):**
-   * Fuentes de verdad estáticas (JSON, Markdown, YAML) residen en `data/` desacopladas del código ejecutable.
-4. **Gobernanza Antialucinación de Parámetros Críticos:**
-   * Precios, constantes de ingeniería, reglas tarifarias y fórmulas clave deben provenir de `Settings` o base de datos, nunca *hardcoded* en código fuente.
+   - El 100% de los archivos `__init__.py` en `src/` y `tests/` deben estar completamente vacíos (0 bytes).
+3. **Pragmatismo sin Sobreingeniería:**
+   - Componentes no requeridos (Bases de datos relacionales, brokers asíncronos, RBAC) se excluyen para mantener la máxima velocidad y simplicidad operativa.
+4. **Gobernanza de Parámetros Críticos:**
+   - Fórmulas de ingeniería centralizadas en el Dominio; configuración de entorno centralizada en `Settings`.
 5. **Controladores Delgados (*Thin Controllers*):**
-   * Los routers en `infrastructure/fastapi/routers/` no contienen lógica de negocio ni importan ORMs directamente; delegan exclusivamente en `adapters/controllers/` o `application/use_cases/`.
+   - Los routers de FastAPI no contienen lógica algorítmica ni de negocio; delegan exclusivamente en `adapters/controllers/` o casos de uso.
 6. **Imports Absolutos:**
-   * Prohibidos los imports relativos (`from . import ...` o `from .. import ...`). Se exige siempre sintaxis absoluta `from src....`.
+   - Prohibidos los imports relativos. Se exige siempre sintaxis absoluta `from src....`.
 7. **Tipado Estricto Exhaustivo:**
-   * Prohibidas colecciones o variables sin tipo explícito (e.g. `list[str]`, `dict[str, Any]`). Toda función debe especificar tipos de parámetros y retorno validados por Pyright.
+   - Toda función y método debe declarar Type Hints en sus parámetros y tipo de retorno validados por Pyright.
 
 ---
 
-## 5. Gobernanza Normativa, Calidad & Matriz de Pruebas
+## 6. Matriz de Verificación Previa a Despliegues
 
-### 5.1. Filosofía de Desarrollo Asistido por Agentes IA ("The Constraint Gauntlet")
-> *"Mi estrategia actual es no leer el código generado por mis agentes. Lo que hago en su lugar es rodearlos de **restricciones extremas**: Unit tests, QA procedures, métricas de calidad, mutation testing, coverage... Tengo muy alta confianza en el código porque tiene que superar todo mi guantelete de restricciones."*  
-> — **Robert C. Martin ("Uncle Bob")**
-
-Bajo este paradigma, el equipo de ingeniería y los agentes de IA operan dentro de un marco de verificación estricto, automatizado y determinista donde ningún código se fusiona a producción sin superar el 100% de los invariantes formales.
-
-### 5.2. Las 5 Baterías del Guantelete (`tests/test_architecture.py`)
-1. **`test_init_files_must_be_empty`:** Comprueba que todos los `__init__.py` en `src/` y `tests/` tengan exactamente 0 bytes (sin código, docstrings ni imports).
-2. **`test_clean_architecture_compliance`:** Valida la regla de dependencia de capas (Domain puro, Application desacoplada, Adapters agnósticos, Routers delgados).
-3. **`test_no_relative_imports`:** Prohíbe imports relativos en `src/` (`from . import ...` o `from .. import ...`), obligando al uso de imports absolutos (`from src...`).
-4. **`test_all_functions_have_type_annotations`:** Exige que el 100% de las funciones en `src/domain` y `src/application` declaren Type Hints en todos sus parámetros y tipo de retorno.
-5. **`test_no_hardcoded_secrets`:** Detecta y bloquea contraseñas, tokens JWT, API keys o connection strings quemadas en código fuente.
-
-### 5.3. Estándares de Calidad & Trazabilidad
-* **Marco de Referencia:** Alineación con buenas prácticas de calidad de producto (ISO/IEC 25010) y seguridad de la información (ISO/IEC 27001).
-* **Trazabilidad de Cambios:** Commits bajo la convención estándar [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`).
-
-### 5.4. Matriz de Verificación Automatizada Previa a Despliegues
-
-Todos los cambios deben superar el 100% de la siguiente batería de comandos antes de integrarse a la rama principal o desplegarse a producción:
+Todos los cambios deben superar el 100% de la siguiente batería de comandos:
 
 ```bash
 # 1. Linter y Verificación de Formato
-ruff check .
-ruff format --check .
+uv run ruff check .
+uv run ruff format --check .
 
-# 2. Análisis Estático de Tipos Estricto (respeta `pyrightconfig.json`; excluye `tests/` por diseño)
-pyright src/
+# 2. Análisis Estático de Tipos Estricto
+uv run pyright src/
 
-# 3. Validación de Arquitectura y Guantelete de Restricciones (AST)
-python3 tests/test_architecture.py
+# 3. Validación de Arquitectura y Guantelete AST
+uv run python3 tests/test_architecture.py
 
-# 4. Suite Completa de Pruebas en Pytest (Unit, Integration, E2E y Gauntlet)
-pytest --maxfail=1 --disable-warnings -v
+# 4. Suite Completa de Pruebas Pytest
+uv run pytest tests/ -v
 ```
-
-### 5.5. Configuración del Editor (Pylance / VS Code)
-
-Todo repositorio debe incluir dos archivos de configuración de tipos para garantizar que el LSP del editor (Pylance) y el análisis estático de CI (Pyright) emitan **exactamente los mismos diagnósticos**:
-
-1. **`pyrightconfig.json` (raíz)** — configura Pyright/Pylance:
-   ```json
-   {
-     "include": ["src"],
-     "exclude": ["tests", "venv", "**/__pycache__", "**/node_modules"],
-     "venvPath": ".",
-     "venv": "venv",
-     "typeCheckingMode": "standard",
-     "pythonVersion": "3.10"
-   }
-   ```
-2. **`.vscode/settings.json`** — alinea Pylance con la misma exclusión:
-   ```json
-   {
-     "python.analysis.exclude": ["tests", "venv", "**/__pycache__"]
-   }
-   ```
-
-**Motivación:** Pylance analiza archivos abiertos explícitamente aunque estén en el `exclude` de `pyrightconfig.json`. Sin `.vscode/settings.json`, los archivos de `tests/` emiten falsos positivos en el editor que no existen en CI — por ejemplo, los stubs de SQLAlchemy tipan `Model.__table__` como `FromClause`, por lo que `Model.__table__.create(engine)` se marca como error pese a ser válido en runtime.
-
-**Reglas innegociables:**
-- La exclusión de `tests/` del análisis de tipos es **deliberada** (los tests ejercitan ORMs en runtime). No debe "corregirse" con `cast(Any, ...)`, `# type: ignore` ni `# noqa`.
-- El `.vscode/settings.json` **debe versionarse**: en `.gitignore` usar el patrón `.vscode/*` (ignora el contenido) seguido de `!.vscode/settings.json` (re-incluye el archivo). Nunca ignorar el directorio con `.vscode/`, ya que Git no desciende a directorios ignorados.
-- `pyright` en CI debe ejecutarse como `pyright src/` (o confiar en el `exclude` de `pyrightconfig.json`); nunca sobre `tests/`.
