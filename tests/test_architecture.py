@@ -6,7 +6,7 @@ def test_init_files_must_be_empty() -> None:
     root = Path(__file__).resolve().parent.parent
     init_files = list(root.glob("src/**/__init__.py")) + list(root.glob("tests/**/__init__.py"))
     assert len(init_files) > 0, "No __init__.py files found"
-    
+
     non_empty = [f for f in init_files if f.stat().st_size != 0]
     assert not non_empty, f"The following __init__.py files are not 0 bytes: {non_empty}"
 
@@ -24,7 +24,7 @@ def test_no_relative_imports() -> None:
             if isinstance(node, ast.ImportFrom) and node.level > 0:
                 violations.append(f"{py_file}:{node.lineno} relative import detected")
 
-    assert not violations, f"Relative imports found:\n" + "\n".join(violations)
+    assert not violations, "Relative imports found:\n" + "\n".join(violations)
 
 
 def test_clean_architecture_compliance() -> None:
@@ -54,7 +54,14 @@ def test_clean_architecture_compliance() -> None:
 
             if layer == "domain":
                 # domain must not import from application, adapters, infrastructure or external packages
-                forbidden_prefixes = ("src.application", "src.adapters", "src.infrastructure", "fastapi", "networkx", "starlette")
+                forbidden_prefixes = (
+                    "src.application",
+                    "src.adapters",
+                    "src.infrastructure",
+                    "fastapi",
+                    "networkx",
+                    "starlette",
+                )
                 if any(module_name.startswith(p) for p in forbidden_prefixes):
                     violations.append(f"Domain layer {rel}:{node.lineno} illegally imports '{module_name}'")
             elif layer == "application":
@@ -93,13 +100,13 @@ def test_all_functions_have_type_annotations() -> None:
                 # Check return type annotation
                 if node.returns is None and node.name != "__init__":
                     violations.append(f"{rel}:{node.lineno} function '{node.name}' missing return type annotation")
-                
+
                 # Check argument annotations (ignoring 'self' and 'cls')
                 for arg in node.args.args:
                     if arg.arg in ("self", "cls"):
                         continue
                     if arg.annotation is None:
-                        violations.append(f"{rel}:{node.lineno} function '{node.name}' argument '{arg.arg}' missing type annotation")
+                        violations.append(f"{rel}:{node.lineno} function '{node.name}' arg '{arg.arg}' missing type")
 
     assert not violations, "Missing type annotations found:\n" + "\n".join(violations)
 
@@ -118,11 +125,14 @@ def test_no_hardcoded_secrets() -> None:
         for node in ast.walk(tree):
             if isinstance(node, ast.Assign):
                 for target in node.targets:
-                    if isinstance(target, ast.Name):
-                        name_lower = target.id.lower()
-                        if any(k in name_lower for k in suspicious_keys):
-                            if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str) and len(node.value.value) > 10:
-                                violations.append(f"{py_file.name}:{node.lineno} suspected hardcoded secret: {target.id}")
+                    if (
+                        isinstance(target, ast.Name)
+                        and any(k in target.id.lower() for k in suspicious_keys)
+                        and isinstance(node.value, ast.Constant)
+                        and isinstance(node.value.value, str)
+                        and len(node.value.value) > 10
+                    ):
+                        violations.append(f"{py_file.name}:{node.lineno} suspected hardcoded secret: {target.id}")
 
     assert not violations, "Suspected hardcoded secrets found:\n" + "\n".join(violations)
 

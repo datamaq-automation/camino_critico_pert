@@ -1,16 +1,17 @@
 from dataclasses import dataclass, field
-from typing import Optional
+
 from src.domain.pert.value_objects import DurationEstimate, TimeWindow
 
 
 @dataclass
 class Activity:
     """Entidad que representa una actividad del proyecto."""
+
     id: str
     name: str
     estimate: DurationEstimate
     predecessors: list[str] = field(default_factory=lambda: list[str]())
-    time_window: Optional[TimeWindow] = None
+    time_window: TimeWindow | None = None
 
     @property
     def duration(self) -> float:
@@ -28,6 +29,7 @@ class Activity:
 @dataclass(frozen=True)
 class CriticalPathResult:
     """Resultado completo del análisis de Camino Crítico (CPM / PERT)."""
+
     activities: list[Activity]
     critical_paths: list[list[str]]
     project_duration: float
@@ -38,6 +40,7 @@ class CriticalPathResult:
 @dataclass(frozen=True)
 class ProbabilityResult:
     """Resultado del cálculo probabilístico PERT para un plazo meta dado."""
+
     target_duration: float
     expected_duration: float
     z_score: float

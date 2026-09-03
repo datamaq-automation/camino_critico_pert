@@ -1,4 +1,3 @@
-from typing import Optional
 from src.application.pert.dtos.activity_dto import (
     ActivityInputDTO,
     ActivityResultDTO,
@@ -31,7 +30,7 @@ class PertMapper:
     @staticmethod
     def domain_to_response_dto(
         result: CriticalPathResult,
-        probability_result: Optional[ProbabilityResult] = None,
+        probability_result: ProbabilityResult | None = None,
     ) -> CriticalPathResponseDTO:
         """Convierte los resultados del dominio a CriticalPathResponseDTO."""
         activity_dtos: list[ActivityResultDTO] = []
@@ -62,7 +61,7 @@ class PertMapper:
                 )
             )
 
-        prob_dto: Optional[ProbabilityDTO] = None
+        prob_dto: ProbabilityDTO | None = None
         if probability_result is not None:
             prob_dto = ProbabilityDTO(
                 target_duration=probability_result.target_duration,

@@ -1,9 +1,9 @@
-from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class ActivityInputDTO(BaseModel):
     """DTO para la entrada de datos de una actividad."""
+
     model_config = ConfigDict(extra="forbid")
 
     id: str = Field(..., min_length=1, max_length=50, description="Identificador único de la actividad (ej. A, T1)")
@@ -16,14 +16,18 @@ class ActivityInputDTO(BaseModel):
 
 class ProjectInputDTO(BaseModel):
     """DTO para procesar un proyecto completo."""
+
     model_config = ConfigDict(extra="forbid")
 
     activities: list[ActivityInputDTO] = Field(..., min_length=1, description="Lista de actividades del proyecto")
-    target_duration: Optional[float] = Field(None, ge=0.0, description="Plazo meta opcional para cálculo de probabilidad PERT")
+    target_duration: float | None = Field(
+        None, ge=0.0, description="Plazo meta opcional para cálculo de probabilidad PERT"
+    )
 
 
 class TimeWindowDTO(BaseModel):
     """DTO que encapsula tiempos y holguras calculadas."""
+
     model_config = ConfigDict(from_attributes=True)
 
     early_start: float
@@ -37,6 +41,7 @@ class TimeWindowDTO(BaseModel):
 
 class ActivityResultDTO(BaseModel):
     """DTO con el resultado calculado para una actividad."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: str
@@ -50,6 +55,7 @@ class ActivityResultDTO(BaseModel):
 
 class ProbabilityDTO(BaseModel):
     """DTO para la probabilidad estadística calculada."""
+
     model_config = ConfigDict(from_attributes=True)
 
     target_duration: float
@@ -61,6 +67,7 @@ class ProbabilityDTO(BaseModel):
 
 class CriticalPathResponseDTO(BaseModel):
     """DTO con la respuesta integral del cálculo de camino crítico y PERT."""
+
     model_config = ConfigDict(from_attributes=True)
 
     activities: list[ActivityResultDTO]
@@ -68,4 +75,4 @@ class CriticalPathResponseDTO(BaseModel):
     project_duration: float
     critical_variance: float
     critical_std_dev: float
-    probability: Optional[ProbabilityDTO] = None
+    probability: ProbabilityDTO | None = None

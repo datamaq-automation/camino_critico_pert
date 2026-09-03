@@ -1,7 +1,9 @@
 from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
 from src.infrastructure.fastapi.routers import api_v1, web_routes
 from src.infrastructure.settings.config import get_settings
 from src.infrastructure.settings.logger import logger

@@ -1,4 +1,5 @@
 from typing import Any
+
 from src.application.pert.dtos.activity_dto import CriticalPathResponseDTO
 
 
@@ -38,34 +39,36 @@ class PertGraphPresenter:
                 border_width = 1.5
                 font_color = "#14532d"
 
-            nodes.append({
-                "id": act.id,
-                "label": label,
-                "shape": "box",
-                "margin": 12,
-                "color": {
-                    "background": bg_color,
-                    "border": border_color,
-                    "highlight": {
+            nodes.append(
+                {
+                    "id": act.id,
+                    "label": label,
+                    "shape": "box",
+                    "margin": 12,
+                    "color": {
                         "background": bg_color,
-                        "border": "#b91c1c" if is_crit else "#15803d",
+                        "border": border_color,
+                        "highlight": {
+                            "background": bg_color,
+                            "border": "#b91c1c" if is_crit else "#15803d",
+                        },
                     },
-                },
-                "borderWidth": border_width,
-                "font": {
-                    "color": font_color,
-                    "face": "monospace",
-                    "size": 13,
-                    "align": "center",
-                },
-                "is_critical": is_crit,
-                "duration": act.duration,
-                "early_start": tw.early_start,
-                "early_finish": tw.early_finish,
-                "late_start": tw.late_start,
-                "late_finish": tw.late_finish,
-                "total_slack": tw.total_slack,
-            })
+                    "borderWidth": border_width,
+                    "font": {
+                        "color": font_color,
+                        "face": "monospace",
+                        "size": 13,
+                        "align": "center",
+                    },
+                    "is_critical": is_crit,
+                    "duration": act.duration,
+                    "early_start": tw.early_start,
+                    "early_finish": tw.early_finish,
+                    "late_start": tw.late_start,
+                    "late_finish": tw.late_finish,
+                    "total_slack": tw.total_slack,
+                }
+            )
 
             # Construcción de Aristas
             for pred_id in act.predecessors:
@@ -76,23 +79,23 @@ class PertGraphPresenter:
                 # Determinar si la conexión pertenece al camino crítico:
                 # Ambas actividades son críticas y hay continuidad temporal (EF_pred == ES_act)
                 is_crit_edge = (
-                    is_crit
-                    and pred_act.is_critical
-                    and abs(pred_act.time_window.early_finish - tw.early_start) < 1e-6
+                    is_crit and pred_act.is_critical and abs(pred_act.time_window.early_finish - tw.early_start) < 1e-6
                 )
 
-                edges.append({
-                    "from": pred_id,
-                    "to": act.id,
-                    "arrows": "to",
-                    "color": {
-                        "color": "#dc2626" if is_crit_edge else "#94a3b8",
-                        "highlight": "#b91c1c" if is_crit_edge else "#64748b",
-                    },
-                    "width": 3 if is_crit_edge else 1.5,
-                    "dashes": False,
-                    "smooth": {"type": "cubicBezier", "roundness": 0.2},
-                })
+                edges.append(
+                    {
+                        "from": pred_id,
+                        "to": act.id,
+                        "arrows": "to",
+                        "color": {
+                            "color": "#dc2626" if is_crit_edge else "#94a3b8",
+                            "highlight": "#b91c1c" if is_crit_edge else "#64748b",
+                        },
+                        "width": 3 if is_crit_edge else 1.5,
+                        "dashes": False,
+                        "smooth": {"type": "cubicBezier", "roundness": 0.2},
+                    }
+                )
 
         return {"nodes": nodes, "edges": edges}
 

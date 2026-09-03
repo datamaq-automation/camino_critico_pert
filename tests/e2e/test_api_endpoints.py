@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+
 from src.main import app
 
 client = TestClient(app)
@@ -11,7 +12,14 @@ def test_api_calculate_cpm_endpoint() -> None:
             {"id": "B", "name": "Tarea B", "optimistic": 4, "most_likely": 4, "pessimistic": 4, "predecessors": []},
             {"id": "C", "name": "Tarea C", "optimistic": 2, "most_likely": 2, "pessimistic": 2, "predecessors": ["A"]},
             {"id": "D", "name": "Tarea D", "optimistic": 5, "most_likely": 5, "pessimistic": 5, "predecessors": ["B"]},
-            {"id": "E", "name": "Tarea E", "optimistic": 3, "most_likely": 3, "pessimistic": 3, "predecessors": ["C", "D"]},
+            {
+                "id": "E",
+                "name": "Tarea E",
+                "optimistic": 3,
+                "most_likely": 3,
+                "pessimistic": 3,
+                "predecessors": ["C", "D"],
+            },
         ],
         "target_duration": 14.0,
     }

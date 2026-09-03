@@ -1,4 +1,5 @@
 from typing import Any
+
 from src.adapters.pert.presenters.pert_graph_presenter import PertGraphPresenter
 from src.application.pert.dtos.activity_dto import CriticalPathResponseDTO, ProjectInputDTO
 from src.application.pert.use_cases.calculate_critical_path import CalculateCriticalPathUseCase

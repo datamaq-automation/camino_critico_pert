@@ -1,4 +1,5 @@
 import pytest
+
 from src.domain.pert.entities import Activity
 from src.domain.pert.exceptions import (
     ActivityNotFoundError,
@@ -32,7 +33,7 @@ def test_deterministic_cpm_classic_example() -> None:
 
     # Verificar tiempos y holguras
     act_map = {a.id: a for a in result.activities}
-    
+
     # B es crítica: ES=0, EF=4, LS=0, LF=4, Slack=0
     assert act_map["B"].time_window.early_start == 0.0
     assert act_map["B"].time_window.early_finish == 4.0
@@ -85,7 +86,7 @@ def test_pert_probabilistic_calculations() -> None:
 
     assert result.project_duration == 11.0  # 5 + 6
     assert result.critical_variance == 2.0  # 1.0 + 1.0
-    assert round(result.critical_std_dev, 4) == round(2.0 ** 0.5, 4)
+    assert round(result.critical_std_dev, 4) == round(2.0**0.5, 4)
 
     # Probabilidad de terminar en 11 (plazo = esperado -> Z=0 -> Prob=50%)
     prob_result = PertProbabilityCalculator.calculate_probability(

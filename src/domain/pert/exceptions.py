@@ -15,7 +15,7 @@ class DuplicateActivityError(PertDomainError):
 
 
 class InvalidDurationError(PertDomainError):
-    """Lanzada cuando las duraciones estimadas son inválidas (negativas o no cumplen optimista <= más_probable <= pesimista)."""
+    """Lanzada cuando las duraciones estimadas son inválidas (negativas o no cumplen o <= m <= p)."""
 
 
 class EmptyProjectError(PertDomainError):

@@ -1,14 +1,16 @@
 from dataclasses import dataclass
+
 from src.domain.pert.exceptions import InvalidDurationError
 
 
 @dataclass(frozen=True)
 class DurationEstimate:
     """Representa la estimación de tiempo de una actividad.
-    
+
     Permite estimaciones determinísticas (CPM: optimista = probable = pesimista)
     o probabilísticas (PERT: optimista <= más probable <= pesimista).
     """
+
     optimistic: float
     most_likely: float
     pessimistic: float
@@ -41,6 +43,7 @@ class DurationEstimate:
 @dataclass(frozen=True)
 class TimeWindow:
     """Ventana de tiempos y holguras calculadas para una actividad en el método del camino crítico."""
+
     early_start: float
     early_finish: float
     late_start: float

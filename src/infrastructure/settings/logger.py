@@ -1,5 +1,6 @@
 import logging
 import sys
+
 from src.infrastructure.settings.config import get_settings
 
 

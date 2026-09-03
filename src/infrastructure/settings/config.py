@@ -1,10 +1,12 @@
 from functools import lru_cache
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Configuración centralizada de la aplicación."""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -28,6 +30,6 @@ class Settings(BaseSettings):
     PORT: int = Field(default=8000)
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     return Settings()

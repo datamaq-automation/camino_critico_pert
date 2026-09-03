@@ -17,6 +17,17 @@ dependencies = [
 [tool.uv]
 package = false
 
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["SRS-SPEC.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "SIM"]
+ignore = ["B008", "BLE001"]
+
+
+
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",

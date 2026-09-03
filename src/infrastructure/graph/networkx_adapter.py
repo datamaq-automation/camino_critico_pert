@@ -1,5 +1,7 @@
 from typing import Any
+
 import networkx as nx
+
 from src.application.pert.dtos.activity_dto import ActivityInputDTO
 
 
@@ -30,7 +32,7 @@ class NetworkXAdapter:
     @classmethod
     def validate_acyclic(cls, graph: nx.DiGraph) -> tuple[bool, list[list[str]]]:
         """Verifica si el grafo es estrictamente acíclico (DAG).
-        
+
         Retorna (is_dag, cycles_found).
         """
         is_dag = nx.is_directed_acyclic_graph(graph)

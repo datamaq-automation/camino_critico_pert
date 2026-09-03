@@ -1,4 +1,5 @@
 import math
+
 from src.domain.pert.entities import Activity, CriticalPathResult, ProbabilityResult
 from src.domain.pert.exceptions import (
     ActivityNotFoundError,
@@ -30,9 +31,7 @@ class CpmPertCalculator:
                 if pred_id == act.id:
                     raise CycleDetectedError(f"La actividad '{act.id}' no puede ser predecesora de sí misma.")
                 if pred_id not in activity_map:
-                    raise ActivityNotFoundError(
-                        f"Predecesora '{pred_id}' no encontrada para la actividad '{act.id}'."
-                    )
+                    raise ActivityNotFoundError(f"Predecesora '{pred_id}' no encontrada para la actividad '{act.id}'.")
 
         # Construir listas de adyacencia
         successors: dict[str, list[str]] = {act.id: list[str]() for act in activities}
@@ -162,18 +161,17 @@ class CpmPertCalculator:
 
         # Nodos iniciales críticos (ES == 0 o sin predecesores críticos)
         start_nodes: list[str] = [
-            act.id for act in activities
-            if act.is_critical and (
-                act.time_window is not None and abs(act.time_window.early_start) < 1e-6
-            )
+            act.id
+            for act in activities
+            if act.is_critical and (act.time_window is not None and abs(act.time_window.early_start) < 1e-6)
         ]
 
         # Nodos finales críticos (EF == project_duration)
         end_nodes: set[str] = {
-            act.id for act in activities
-            if act.is_critical and (
-                act.time_window is not None and abs(act.time_window.early_finish - project_duration) < 1e-6
-            )
+            act.id
+            for act in activities
+            if act.is_critical
+            and (act.time_window is not None and abs(act.time_window.early_finish - project_duration) < 1e-6)
         }
 
         all_paths: list[list[str]] = list[list[str]]()

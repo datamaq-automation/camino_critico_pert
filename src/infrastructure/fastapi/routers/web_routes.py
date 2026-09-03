@@ -1,9 +1,11 @@
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
+
 from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+
 from src.adapters.pert.controllers.pert_controller import PertController
 from src.application.pert.dtos.activity_dto import ActivityInputDTO, ProjectInputDTO
 from src.domain.pert.exceptions import PertDomainError
@@ -19,8 +21,9 @@ router = APIRouter(include_in_schema=False)
 def index_view(request: Request) -> Any:
     """Renderiza la vista principal para ingreso y edición de actividades."""
     return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "error_message": None},
+        request=request,
+        name="index.html",
+        context={"error_message": None},
     )
 
 
@@ -28,15 +31,13 @@ def index_view(request: Request) -> Any:
 def calculate_web_view(
     request: Request,
     activities_json: str = Form(...),
-    target_duration: Optional[float] = Form(None),
+    target_duration: float | None = Form(None),
     controller: PertController = Depends(get_pert_controller),
 ) -> Any:
     """Procesa el formulario web y renderiza la vista de resultados interactiva."""
     try:
         raw_activities = json.loads(activities_json)
-        activities: list[ActivityInputDTO] = [
-            ActivityInputDTO(**item) for item in raw_activities
-        ]
+        activities: list[ActivityInputDTO] = [ActivityInputDTO(**item) for item in raw_activities]
 
         project_input = ProjectInputDTO(
             activities=activities,
@@ -46,9 +47,9 @@ def calculate_web_view(
         calc_result = controller.process_project(project_input)
 
         return templates.TemplateResponse(
-            "result.html",
-            {
-                "request": request,
+            request=request,
+            name="result.html",
+            context={
                 "result": calc_result["result"],
                 "vis_graph": calc_result["vis_graph"],
                 "mermaid_code": calc_result["mermaid_code"],
@@ -56,13 +57,15 @@ def calculate_web_view(
         )
     except PertDomainError as exc:
         return templates.TemplateResponse(
-            "index.html",
-            {"request": request, "error_message": f"Error en el grafo: {exc}"},
+            request=request,
+            name="index.html",
+            context={"error_message": f"Error en el grafo: {exc}"},
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
     except Exception as exc:
         return templates.TemplateResponse(
-            "index.html",
-            {"request": request, "error_message": f"Error en los datos ingresados: {exc}"},
+            request=request,
+            name="index.html",
+            context={"error_message": f"Error en los datos ingresados: {exc}"},
             status_code=status.HTTP_400_BAD_REQUEST,
         )
