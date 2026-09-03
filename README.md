@@ -96,30 +96,39 @@ src/
 
 ---
 
-## 📦 Instalación y Puesta en Marcha
+## 📦 Instalación y Puesta en Marcha Rápida con `./run.sh`
 
-1. **Clonar o acceder al directorio del proyecto**:
-   ```bash
-   cd /home/agustin/proyectos_software/camino_critico_pert
-   ```
+El proyecto incluye el script ejecutable [`./run.sh`](file:///home/agustin/proyectos_software/camino_critico_pert/run.sh) que automatiza la verificación del entorno, la instalación de dependencias y el inicio del servidor:
 
-2. **Crear y activar el entorno virtual con `uv`**:
+```bash
+# 1. Iniciar servidor web de desarrollo (http://127.0.0.1:8000)
+./run.sh
+
+# 2. Ejecutar la suite de pruebas Pytest
+./run.sh test
+
+# 3. Ejecutar la matriz completa de calidad (Ruff + Pyright + AST Gauntlet + Tests)
+./run.sh check
+```
+
+---
+
+### Puesta en Marcha Manual
+
+Si prefieres ejecutar los comandos de forma manual:
+
+1. **Crear y activar el entorno virtual con `uv`**:
    ```bash
-   uv venv
+   uv sync
    source .venv/bin/activate
    ```
 
-3. **Instalar dependencias**:
-   ```bash
-   uv sync
-   ```
-
-4. **Iniciar el servidor de desarrollo**:
+2. **Iniciar el servidor de desarrollo**:
    ```bash
    uv run uvicorn src.main:app --reload --host 127.0.0.1 --port 8000
    ```
 
-5. **Acceder a la aplicación**:
+3. **Acceder a la aplicación**:
    - **Interfaz Web (Dashboard Jinja2)**: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
    - **Documentación Interactiva (Swagger / OpenAPI)**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
    - **Documentación ReDoc**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
@@ -128,8 +137,12 @@ src/
 
 ## 🧪 Batería de Pruebas y Calidad de Código
 
-El repositorio incluye el **Guantelete de Restricciones AST** y suites completas de pruebas unitarias, de integración y *end-to-end*:
+Puedes ejecutar todas las verificaciones con un único comando:
+```bash
+./run.sh check
+```
 
+O individualmente:
 ```bash
 # 1. Linter y formato con Ruff
 uv run ruff check .
@@ -143,6 +156,7 @@ uv run python3 tests/test_architecture.py
 
 # 4. Suite completa de pruebas con Pytest (21 tests)
 uv run pytest tests/ -v
+
 ```
 
 ---
